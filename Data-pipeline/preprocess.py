@@ -22,21 +22,16 @@ def load_and_preprocess_test_data(test_data_path, preprocessor_path):
         expected_columns = joblib.load(preprocessor_dir / 'expected_columns.joblib')
         processed_data = test_data.copy()
 
-        # Drop the same columns as in training
         drop_cols = ['LeadID', 'CustomerID', 'DTLeadCreated', 'DTLeadAllocated', 'OBSFullName', 'OBSEmail', 'Domain']
         processed_data.drop(columns=[col for col in drop_cols if col in processed_data.columns], inplace=True, errors='ignore')
 
-        # Feature engineering (must match training)
-        # DTLeadCreated/DTLeadAllocated to datetime if present
         if 'DTLeadCreated' in test_data.columns:
             processed_data['DTLeadCreated'] = pd.to_datetime(test_data['DTLeadCreated'])
         if 'DTLeadAllocated' in test_data.columns:
             processed_data['DTLeadAllocated'] = pd.to_datetime(test_data['DTLeadAllocated'])
 
-        # IsWeekendEnquiry
         if 'DTLeadCreated' in processed_data.columns:
             processed_data['IsWeekendEnquiry'] = processed_data['DTLeadCreated'].dt.dayofweek.apply(lambda x: 1 if x >= 5 else 0)
-        # TimeOfDayCategory
         def time_of_day(hour):
             if 5 <= hour < 12:
                 return 'Morning'
@@ -48,17 +43,14 @@ def load_and_preprocess_test_data(test_data_path, preprocessor_path):
                 return 'Night'
         if 'HourOfEnquiry' in processed_data.columns:
             processed_data['TimeOfDayCategory'] = processed_data['HourOfEnquiry'].apply(time_of_day)
-        # IsFinanceAppliedAndApproved
         if 'FinanceApplied' in processed_data.columns and 'FinanceApproved' in processed_data.columns:
             processed_data['IsFinanceAppliedAndApproved'] = processed_data.apply(
                 lambda row: 1 if row['FinanceApplied'] == 1 and row['FinanceApproved'] == 1 else 0, axis=1
             )
 
-        # Encode categorical columns
         cat_cols = processed_data.select_dtypes(include='object').columns.tolist()
         processed_data[cat_cols] = encoder.transform(processed_data[cat_cols].astype(str))
 
-        # Reindex to match training columns
         processed_data = processed_data.reindex(columns=expected_columns, fill_value=0)
         return processed_data
     except Exception as e:

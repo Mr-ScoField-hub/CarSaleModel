@@ -9,7 +9,6 @@ from predict import predict_probabilities
 from priority_classifier import add_priority_levels
 from save_final_predictions import merge_and_save_predictions
 
-# Configure logging
 def setup_logging(log_dir='./logs'):
     log_dir = Path(log_dir)
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -49,21 +48,21 @@ def run_prediction_pipeline(config):
 
     
         
-        # Step 2:
+       
         logging.info("Loading trained model")
         model = load_model(config['model_path'])
         logging.info(f"Loaded model type: {type(model).__name__}")
         
-        # Step 3:
+        
         logging.info("Generating probability predictions")
         probabilities = predict_probabilities(processed_data, model)
         predictions_df = pd.DataFrame({'VehicleSold_Probability': probabilities})
         
-        # Step 4:
+    
         logging.info("Classifying priority levels")
         predictions_df = add_priority_levels(predictions_df)
         
-        # Step 5:
+     
         logging.info("Saving final results")
         merge_and_save_predictions(
             config['test_data_path'],
@@ -80,7 +79,6 @@ def run_prediction_pipeline(config):
   
 
 def main():
-    # Define configuration
     config = {
         'test_data_path': '../Data/TestData.csv',
         'model_path': './models/trained_model.pkl',
@@ -88,15 +86,12 @@ def main():
         'output_path': '../Data/scored_leads.csv'
     }
     
-    # Create necessary directories
     for path in ['./models', './preprocessors', './logs']:
         Path(path).mkdir(parents=True, exist_ok=True)
     
-    # Setup logging
     setup_logging()
     
     try:
-        # Run the pipeline
         success = run_prediction_pipeline(config)
         
         if success:
